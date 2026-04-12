@@ -1,0 +1,10 @@
+path: D:\deeplearning\lung_nodules_od\ct_images
+train: images/train
+val: images/val
+test:
+
+# Classes
+names:
+  0: nodule_type1
+  1: nodule_type2
+
