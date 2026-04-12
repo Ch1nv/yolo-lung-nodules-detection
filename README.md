@@ -1,21 +1,22 @@
 # Lung Nodules Detection
 ## Description
-Lung nodules are small lesions that may indicate early-stage lung cancer. 
-Due to their subtle appearance and small size in CT scans, manual inspection by radiologists can be time-consuming and prone to missed detections.
+This project applies YOLOv11n for lung nodule detection in CT images, aiming to assist early lung cancer screening.
 
-The goal of this project is to develop an automated object detection model to accurately locate lung nodules in CT images using deep learning techniques.
+Due to the small size and subtle appearance of nodules, detection is challenging. 
+To address this, the model is optimized for small object detection using high-resolution inputs and data augmentation techniques.
 
-In this project, I apply YOLOv11n to detect two types of lung nodules. 
-The model is trained on a labeled CT scan dataset and evaluated using standard object detection metrics such as Precision, Recall, and mAP.
+### Detection Results
 
-This work focuses on improving small object detection performance through:
-- High-resolution input images
-- Strong data augmentation strategies
-- Optimized loss weighting for better localization accuracy
+<p align="center">
+  <img src="results/yolo11s/val_batch0_labels.jpg" width="45%">
+  <span style="font-size: 30px; margin: 0 10px;">  </span>  
+<img src="results/yolo11s/val_batch0_pred.jpg" width="45%">
+</p>
+<p align="center">
+  <em>Ground Truth (left) vs Prediction (right)</em>
+</p>
 
-This project demonstrates the application of deep learning in medical image analysis, particularly in improving early detection support systems for lung cancer screening.
 
-The final objective is to build a reliable detection system that can assist medical professionals in identifying potential lung nodules more efficiently.
 ## Dataset
 - Dataset: [Lung Nodules Dataset](https://www.kaggle.com/datasets/younesselbrag/lung-nodules-detection-dataset-annotations/data)  
 - Image size: 416 × 416  
@@ -40,9 +41,9 @@ After comparing different models, **YOLOv11n** performs the best.
 
 ### Performance
 
-| Model     | Precision | Recall | mAP50 | mAP75 | mAP50-95 |
-|-----------|-----------|--------|-------|-------|----------|
-| YOLOv11n  | 88.3%     | 82.5%  | 91.5% | 59.1% | 53.8%    |
+| Model    | Precision | Recall | mAP50 | mAP75 | mAP50-95 |
+|----------|-----------|--------|-------|-------|----------|
+| YOLOv11s | 88.3%     | 82.5%  | 91.5% | 59.1% | 53.8%    |
 
 ### Metrics Explanation
 
@@ -65,6 +66,18 @@ After comparing different models, **YOLOv11n** performs the best.
 - **mAP50-95 (53.8%)**  
   Averaged mAP across IoU thresholds from 0.5 to 0.95.  
   Provides a comprehensive evaluation of both detection and localization performance.
+
+
+<p align="center">
+  <img src="results/yolo11s/R_curve.png" width="45%">
+  <img src="results/yolo11s/P_curve.png" width="45%">
+</p>
+
+<p align="center">
+  <img src="results/yolo11s/F1_curve.png" width="45%">
+  <img src="results/yolo11s/PR_curve.png" width="45%">
+</p>
+
 
 ## Training Configuration
 
