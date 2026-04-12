@@ -1,6 +1,6 @@
 # Lung Nodules Detection
 ## Description
-This project applies YOLOv11n for lung nodule detection in CT images, aiming to assist early lung cancer screening.
+This project applies YOLOv11s for lung nodule detection in CT images, aiming to assist early lung cancer screening.
 
 Due to the small size and subtle appearance of nodules, detection is challenging. 
 To address this, the model is optimized for small object detection using high-resolution inputs and data augmentation techniques.
@@ -37,7 +37,7 @@ ct_images/
 
 ## Model
 
-After comparing different models, **YOLOv11n** performs the best.
+After comparing different models, **YOLOv11s** performs the best.
 
 ### Performance
 
