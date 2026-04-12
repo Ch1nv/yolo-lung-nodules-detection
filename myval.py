@@ -3,7 +3,7 @@ from ultralytics import YOLO
 
 
 if __name__ == '__main__':
-    model = YOLO(r"D:\deeplearning\lung_nodules_od\results\yolo11n4\weights\best.pt")
+    model = YOLO(r"D:\deeplearning\lung_nodules_od\results\yolo11s\weights\best.pt")
 
     metrics = model.val()  # no arguments needed, dataset and settings remembered
     print(metrics.box.map)  # mAP50-95
