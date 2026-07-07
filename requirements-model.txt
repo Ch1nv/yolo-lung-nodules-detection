@@ -1,0 +1,6 @@
+fastapi==0.116.1
+google-cloud-storage==3.2.0
+numpy==2.2.6
+pillow==11.3.0
+ultralytics==8.3.168
+uvicorn[standard]==0.35.0

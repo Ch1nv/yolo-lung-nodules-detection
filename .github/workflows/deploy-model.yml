@@ -1,0 +1,92 @@
+name: Deploy Vertex AI Model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "services/model/**"
+      - "Dockerfile"
+      - "requirements-model.txt"
+      - "results/yolo11n/weights/best.pt"
+      - ".github/workflows/deploy-model.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      ARTIFACT_REPOSITORY: ${{ vars.ARTIFACT_REPOSITORY }}
+      MODEL_IMAGE_NAME: ${{ vars.VERTEX_MODEL_IMAGE_NAME }}
+      MODEL_DISPLAY_NAME: ${{ vars.VERTEX_MODEL_DISPLAY_NAME }}
+      VERTEX_ENDPOINT_ID: ${{ vars.VERTEX_ENDPOINT_ID }}
+      VERTEX_MACHINE_TYPE: ${{ vars.VERTEX_MACHINE_TYPE }}
+      VERTEX_ACCELERATOR_TYPE: ${{ vars.VERTEX_ACCELERATOR_TYPE }}
+      VERTEX_ACCELERATOR_COUNT: ${{ vars.VERTEX_ACCELERATOR_COUNT }}
+      VERTEX_MODEL_SERVICE_ACCOUNT: ${{ vars.VERTEX_MODEL_SERVICE_ACCOUNT }}
+      RESULT_BUCKET: ${{ vars.RESULT_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push model image
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPOSITORY}/${MODEL_IMAGE_NAME}:${GITHUB_SHA}"
+          docker build -t "${IMAGE}" .
+          docker push "${IMAGE}"
+          echo "IMAGE=${IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Upload Vertex AI model
+        run: |
+          gcloud ai models upload \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --display-name="${MODEL_DISPLAY_NAME}" \
+            --container-image-uri="${IMAGE}" \
+            --container-predict-route="/predict" \
+            --container-health-route="/health" \
+            --container-ports=8080 \
+            --container-env-vars="RESULT_BUCKET=${RESULT_BUCKET}" \
+            --quiet
+          MODEL_NAME=$(gcloud ai models list \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --filter="displayName=${MODEL_DISPLAY_NAME}" \
+            --sort-by="~createTime" \
+            --limit=1 \
+            --format="value(name)")
+          MODEL_ID="${MODEL_NAME##*/}"
+          echo "MODEL_ID=${MODEL_ID}" >> "${GITHUB_ENV}"
+
+      - name: Deploy model to Vertex AI endpoint
+        run: |
+          SERVICE_ACCOUNT_FLAG=""
+          if [ -n "${VERTEX_MODEL_SERVICE_ACCOUNT}" ]; then
+            SERVICE_ACCOUNT_FLAG="--service-account=${VERTEX_MODEL_SERVICE_ACCOUNT}"
+          fi
+
+          gcloud ai endpoints deploy-model "${VERTEX_ENDPOINT_ID}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --model="${MODEL_ID}" \
+            --display-name="${MODEL_DISPLAY_NAME}-${GITHUB_SHA::7}" \
+            --machine-type="${VERTEX_MACHINE_TYPE}" \
+            --accelerator="type=${VERTEX_ACCELERATOR_TYPE},count=${VERTEX_ACCELERATOR_COUNT}" \
+            --min-replica-count=1 \
+            --max-replica-count=1 \
+            --traffic-split=0=100 \
+            ${SERVICE_ACCOUNT_FLAG}
