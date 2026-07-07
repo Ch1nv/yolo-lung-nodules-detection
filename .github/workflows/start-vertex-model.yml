@@ -1,0 +1,72 @@
+name: Start Vertex Model
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      MODEL_DISPLAY_NAME: ${{ vars.VERTEX_MODEL_DISPLAY_NAME }}
+      VERTEX_ENDPOINT_ID: ${{ vars.VERTEX_ENDPOINT_ID }}
+      VERTEX_MACHINE_TYPE: ${{ vars.VERTEX_MACHINE_TYPE }}
+      VERTEX_ACCELERATOR_TYPE: ${{ vars.VERTEX_ACCELERATOR_TYPE }}
+      VERTEX_ACCELERATOR_COUNT: ${{ vars.VERTEX_ACCELERATOR_COUNT }}
+      VERTEX_MODEL_SERVICE_ACCOUNT: ${{ vars.VERTEX_MODEL_SERVICE_ACCOUNT }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy latest existing Vertex model
+        run: |
+          DEPLOYED_IDS=$(gcloud ai endpoints describe "${VERTEX_ENDPOINT_ID}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --format="value(deployedModels[].id)")
+
+          if [ -n "${DEPLOYED_IDS}" ]; then
+            echo "Endpoint already has deployed model(s): ${DEPLOYED_IDS}"
+            exit 0
+          fi
+
+          MODEL_NAME=$(gcloud ai models list \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --filter="displayName=${MODEL_DISPLAY_NAME}" \
+            --sort-by="~createTime" \
+            --limit=1 \
+            --format="value(name)")
+
+          if [ -z "${MODEL_NAME}" ]; then
+            echo "No existing Vertex model found for displayName=${MODEL_DISPLAY_NAME}."
+            echo "Run the Deploy Vertex AI Model workflow once before using Start Vertex Model."
+            exit 1
+          fi
+
+          MODEL_ID="${MODEL_NAME##*/}"
+          SERVICE_ACCOUNT_FLAG=""
+          if [ -n "${VERTEX_MODEL_SERVICE_ACCOUNT}" ]; then
+            SERVICE_ACCOUNT_FLAG="--service-account=${VERTEX_MODEL_SERVICE_ACCOUNT}"
+          fi
+
+          gcloud ai endpoints deploy-model "${VERTEX_ENDPOINT_ID}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --model="${MODEL_ID}" \
+            --display-name="${MODEL_DISPLAY_NAME}-manual-start" \
+            --machine-type="${VERTEX_MACHINE_TYPE}" \
+            --accelerator="type=${VERTEX_ACCELERATOR_TYPE},count=${VERTEX_ACCELERATOR_COUNT}" \
+            --min-replica-count=1 \
+            --max-replica-count=1 \
+            --traffic-split=0=100 \
+            ${SERVICE_ACCOUNT_FLAG}

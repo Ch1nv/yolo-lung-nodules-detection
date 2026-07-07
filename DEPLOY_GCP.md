@@ -243,3 +243,12 @@ VERTEX_ACCELERATOR_COUNT=1
 ```
 
 Use Workload Identity Federation for GitHub authentication instead of a JSON service account key.
+
+## 11. Fast start and stop workflows
+
+After the full model workflow has run at least once, use these manual workflows for day-to-day demos:
+
+- `Start Vertex Model`: deploys the latest existing Vertex model to the endpoint without rebuilding the CUDA Docker image.
+- `Stop Vertex Model`: undeploys all models from the endpoint to stop GPU billing.
+
+This is faster than `Deploy Vertex AI Model` because it skips Docker build, image push, and model upload.

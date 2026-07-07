@@ -1,0 +1,44 @@
+name: Stop Vertex Model
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      VERTEX_ENDPOINT_ID: ${{ vars.VERTEX_ENDPOINT_ID }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Undeploy all models from Vertex endpoint
+        run: |
+          DEPLOYED_IDS=$(gcloud ai endpoints describe "${VERTEX_ENDPOINT_ID}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --format="value(deployedModels[].id)")
+
+          if [ -z "${DEPLOYED_IDS}" ]; then
+            echo "No deployed models found on endpoint ${VERTEX_ENDPOINT_ID}."
+            exit 0
+          fi
+
+          for DEPLOYED_MODEL_ID in ${DEPLOYED_IDS}; do
+            echo "Undeploying deployed model ${DEPLOYED_MODEL_ID}..."
+            gcloud ai endpoints undeploy-model "${VERTEX_ENDPOINT_ID}" \
+              --project="${PROJECT_ID}" \
+              --region="${REGION}" \
+              --deployed-model-id="${DEPLOYED_MODEL_ID}" \
+              --quiet
+          done
