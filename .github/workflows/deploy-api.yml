@@ -1,4 +1,9 @@
+# Description:
+#   Automatic + manual deployment for the Cloud Run API.
+#   Runs automatically when API code, the API Dockerfile, or API dependencies change on main.
+#   Use this when the FastAPI upload/prediction proxy changes. This does not start GPU billing.
 name: Deploy Cloud Run API
+run-name: Deploy Cloud Run API
 
 on:
   workflow_dispatch:

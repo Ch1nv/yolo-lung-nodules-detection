@@ -1,4 +1,9 @@
+# Description:
+#   Manual stop for the Vertex AI GPU endpoint.
+#   Undeploys all models currently attached to the endpoint.
+#   Use this immediately after demos/tests to stop GPU billing.
 name: Stop Vertex Model
+run-name: Stop Vertex GPU model
 
 on:
   workflow_dispatch:

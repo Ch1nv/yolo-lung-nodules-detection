@@ -1,4 +1,10 @@
+# Description:
+#   Manual full deployment for the Vertex AI model container.
+#   Builds and pushes the CUDA/PyTorch Docker image, uploads a new Vertex AI model, then deploys it.
+#   Use this only when model weights, model container code, or model dependencies change.
+#   Cost note: this deploys a GPU endpoint with min replica 1, so stop it after testing.
 name: Deploy Vertex AI Model
+run-name: Full Vertex model deploy
 
 on:
   workflow_dispatch:

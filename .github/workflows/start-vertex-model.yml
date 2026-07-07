@@ -1,4 +1,10 @@
+# Description:
+#   Manual fast start for the Vertex AI GPU endpoint.
+#   Reuses the latest existing Vertex model and deploys it to the endpoint without rebuilding Docker.
+#   Use this before a demo or prediction test when the endpoint has no deployed model.
+#   Cost note: GPU billing starts after this workflow successfully deploys the model.
 name: Start Vertex Model
+run-name: Start Vertex GPU model
 
 on:
   workflow_dispatch:

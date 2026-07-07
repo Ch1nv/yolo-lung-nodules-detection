@@ -1,4 +1,9 @@
+# Description:
+#   Automatic + manual deployment for the static frontend on GitHub Pages.
+#   Runs automatically when files in web/ or this workflow change on main.
+#   Use this when the upload UI or result display changes. This does not start GPU billing.
 name: Deploy Frontend to GitHub Pages
+run-name: Deploy frontend to GitHub Pages
 
 on:
   workflow_dispatch:
