@@ -283,6 +283,10 @@ h2 {
   background: #fff;
 }
 
+.result-card-ok {
+  border-left-color: var(--accent);
+}
+
 .result-card strong {
   font-size: 0.95rem;
   overflow-wrap: anywhere;
@@ -294,26 +298,6 @@ h2 {
   gap: 10px;
   color: var(--muted);
   font-size: 0.86rem;
-}
-
-.raw-block {
-  display: grid;
-  gap: 10px;
-  padding: 0 14px 14px;
-}
-
-#rawJson {
-  max-height: 260px;
-  margin: 0;
-  padding: 12px;
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #101820;
-  color: #d8f3dc;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  white-space: pre-wrap;
 }
 
 @media (max-width: 860px) {

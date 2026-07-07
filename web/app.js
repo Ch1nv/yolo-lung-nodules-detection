@@ -5,7 +5,6 @@ const confidenceInput = document.querySelector("#confidenceInput");
 const iouInput = document.querySelector("#iouInput");
 const detectButton = document.querySelector("#detectButton");
 const healthButton = document.querySelector("#healthButton");
-const copyButton = document.querySelector("#copyButton");
 const previewImage = document.querySelector("#previewImage");
 const overlayCanvas = document.querySelector("#overlayCanvas");
 const emptyState = document.querySelector("#emptyState");
@@ -13,7 +12,6 @@ const imageMeta = document.querySelector("#imageMeta");
 const serviceStatus = document.querySelector("#serviceStatus");
 const resultCount = document.querySelector("#resultCount");
 const resultList = document.querySelector("#resultList");
-const rawJson = document.querySelector("#rawJson");
 const imageStage = document.querySelector("#imageStage");
 
 const state = {
@@ -32,12 +30,23 @@ function formatNumber(value) {
   return Number(value).toFixed(2);
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[character];
+  });
+}
+
 function resetResults() {
   state.lastResponse = null;
   resultCount.textContent = "0 detections";
   resultList.innerHTML = "";
-  rawJson.textContent = "{}";
-  copyButton.disabled = true;
   clearCanvas();
 }
 
@@ -92,8 +101,6 @@ function drawDetections(detections = []) {
 function renderResults(response) {
   const detections = response.detections || [];
   resultCount.textContent = `${detections.length} detection${detections.length === 1 ? "" : "s"}`;
-  rawJson.textContent = JSON.stringify(response, null, 2);
-  copyButton.disabled = false;
 
   if (!detections.length) {
     resultList.innerHTML = '<div class="empty-state">No detections</div>';
@@ -104,9 +111,10 @@ function renderResults(response) {
   resultList.innerHTML = detections
     .map((detection, index) => {
       const [x, y, width, height] = detection.bbox_xywh;
+      const className = escapeHtml(detection.class_name);
       return `
         <article class="result-card">
-          <strong>${index + 1}. ${detection.class_name}</strong>
+          <strong>${index + 1}. ${className}</strong>
           <div class="metric-row"><span>Confidence</span><span>${(detection.confidence * 100).toFixed(2)}%</span></div>
           <div class="metric-row"><span>x / y</span><span>${formatNumber(x)} / ${formatNumber(y)}</span></div>
           <div class="metric-row"><span>w / h</span><span>${formatNumber(width)} / ${formatNumber(height)}</span></div>
@@ -120,10 +128,11 @@ function renderResults(response) {
 
 function renderError(error) {
   const message = typeof error === "string" ? error : error.message || "Prediction failed";
+  resultCount.textContent = "Request failed";
   resultList.innerHTML = `
     <article class="result-card">
       <strong>Request failed</strong>
-      <div class="metric-row"><span>Status</span><span>${message}</span></div>
+      <div class="metric-row"><span>Status</span><span>${escapeHtml(message)}</span></div>
     </article>
   `;
 }
@@ -145,21 +154,20 @@ async function checkApiHealth() {
 
     state.healthOk = true;
     setStatus("API OK", "ok");
-    rawJson.textContent = JSON.stringify(payload, null, 2);
-    copyButton.disabled = false;
+    resultCount.textContent = "API ready";
+    resultList.innerHTML = `
+      <article class="result-card result-card-ok">
+        <strong>API connected</strong>
+        <div class="metric-row"><span>Project</span><span>${escapeHtml(payload.project_id || "Ready")}</span></div>
+        <div class="metric-row"><span>Vertex</span><span>${payload.vertex_endpoint_id ? "Configured" : "Not set"}</span></div>
+      </article>
+    `;
     return true;
   } catch (error) {
     state.healthOk = false;
     setStatus("API Error", "error");
-    rawJson.textContent = JSON.stringify(
-      {
-        error: error.message,
-        note:
-          "The browser could not reach the Cloud Run API. Open /health directly, try another browser/network, and check the DevTools Network tab.",
-        api: `${API_BASE_URL}/health`,
-      },
-      null,
-      2,
+    renderError(
+      "API connection failed. Open /health directly, try another browser or network, and check DevTools Network.",
     );
     return false;
   } finally {
@@ -200,15 +208,6 @@ async function predict() {
   } catch (error) {
     setStatus("Error", "error");
     renderError(error);
-    rawJson.textContent = JSON.stringify(
-      {
-        error: error.message,
-        note:
-          "If this says Failed to fetch, the browser connection to Cloud Run was reset or blocked. If the API returns a Vertex error JSON, check whether Start Vertex Model has run.",
-      },
-      null,
-      2,
-    );
   } finally {
     detectButton.disabled = !state.file;
   }
@@ -238,14 +237,6 @@ previewImage.addEventListener("load", () => {
 
 detectButton.addEventListener("click", predict);
 healthButton.addEventListener("click", checkApiHealth);
-
-copyButton.addEventListener("click", async () => {
-  await navigator.clipboard.writeText(rawJson.textContent);
-  copyButton.textContent = "Copied";
-  window.setTimeout(() => {
-    copyButton.textContent = "Copy JSON";
-  }, 1200);
-});
 
 window.addEventListener("resize", () => {
   if (state.lastResponse) {
