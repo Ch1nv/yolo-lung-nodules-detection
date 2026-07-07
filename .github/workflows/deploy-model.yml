@@ -2,14 +2,6 @@ name: Deploy Vertex AI Model
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "services/model/**"
-      - "Dockerfile"
-      - "requirements-model.txt"
-      - "results/yolo11n/weights/best.pt"
-      - ".github/workflows/deploy-model.yml"
 
 permissions:
   contents: read
