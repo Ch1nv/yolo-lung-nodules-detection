@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lung Nodule Detection</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-label="Lung nodule detection workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">YOLO11n Cloud Inference</p>
+            <h1>Lung Nodule Detection</h1>
+          </div>
+          <div class="status-pill" id="serviceStatus">Ready</div>
+        </header>
+
+        <section class="control-band" aria-label="Controls">
+          <label class="file-picker">
+            <input id="imageInput" type="file" accept="image/*" />
+            <span>Select CT Image</span>
+          </label>
+
+          <label class="compact-field">
+            <span>Confidence</span>
+            <input id="confidenceInput" type="number" min="0.01" max="1" step="0.01" value="0.25" />
+          </label>
+
+          <label class="compact-field">
+            <span>IoU</span>
+            <input id="iouInput" type="number" min="0.01" max="1" step="0.01" value="0.45" />
+          </label>
+
+          <button id="detectButton" class="primary-button" type="button" disabled>
+            Detect
+          </button>
+        </section>
+
+        <section class="viewer-grid">
+          <div class="image-panel">
+            <div class="panel-header">
+              <h2>Image</h2>
+              <span id="imageMeta">No file selected</span>
+            </div>
+            <div class="image-stage" id="imageStage">
+              <img id="previewImage" alt="Uploaded CT preview" />
+              <canvas id="overlayCanvas" aria-label="Detection overlay"></canvas>
+              <div class="empty-state" id="emptyState">Select an image</div>
+            </div>
+          </div>
+
+          <aside class="results-panel" aria-label="Detection results">
+            <div class="panel-header">
+              <h2>Results</h2>
+              <span id="resultCount">0 detections</span>
+            </div>
+            <div id="resultList" class="result-list"></div>
+            <div class="raw-block">
+              <button id="copyButton" class="ghost-button" type="button" disabled>Copy JSON</button>
+              <pre id="rawJson">{}</pre>
+            </div>
+          </aside>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
