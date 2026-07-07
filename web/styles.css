@@ -106,7 +106,7 @@ h2 {
 
 .control-band {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 150px 150px 130px;
+  grid-template-columns: minmax(220px, 1fr) 150px 150px 130px 120px;
   gap: 12px;
   align-items: end;
   margin-bottom: 16px;
@@ -285,6 +285,7 @@ h2 {
 
 .result-card strong {
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 
 .metric-row {

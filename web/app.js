@@ -4,6 +4,7 @@ const imageInput = document.querySelector("#imageInput");
 const confidenceInput = document.querySelector("#confidenceInput");
 const iouInput = document.querySelector("#iouInput");
 const detectButton = document.querySelector("#detectButton");
+const healthButton = document.querySelector("#healthButton");
 const copyButton = document.querySelector("#copyButton");
 const previewImage = document.querySelector("#previewImage");
 const overlayCanvas = document.querySelector("#overlayCanvas");
@@ -19,6 +20,7 @@ const state = {
   file: null,
   objectUrl: null,
   lastResponse: null,
+  healthOk: false,
 };
 
 function setStatus(text, mode = "") {
@@ -126,6 +128,45 @@ function renderError(error) {
   `;
 }
 
+async function checkApiHealth() {
+  setStatus("Checking", "busy");
+  healthButton.disabled = true;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(JSON.stringify(payload));
+    }
+
+    state.healthOk = true;
+    setStatus("API OK", "ok");
+    rawJson.textContent = JSON.stringify(payload, null, 2);
+    copyButton.disabled = false;
+    return true;
+  } catch (error) {
+    state.healthOk = false;
+    setStatus("API Error", "error");
+    rawJson.textContent = JSON.stringify(
+      {
+        error: error.message,
+        note:
+          "The browser could not reach the Cloud Run API. Open /health directly, try another browser/network, and check the DevTools Network tab.",
+        api: `${API_BASE_URL}/health`,
+      },
+      null,
+      2,
+    );
+    return false;
+  } finally {
+    healthButton.disabled = false;
+  }
+}
+
 async function predict() {
   if (!state.file) return;
 
@@ -162,7 +203,8 @@ async function predict() {
     rawJson.textContent = JSON.stringify(
       {
         error: error.message,
-        note: "If Vertex AI has no deployed model, run the Deploy Vertex AI Model workflow first.",
+        note:
+          "If this says Failed to fetch, the browser connection to Cloud Run was reset or blocked. If the API returns a Vertex error JSON, check whether Start Vertex Model has run.",
       },
       null,
       2,
@@ -195,6 +237,7 @@ previewImage.addEventListener("load", () => {
 });
 
 detectButton.addEventListener("click", predict);
+healthButton.addEventListener("click", checkApiHealth);
 
 copyButton.addEventListener("click", async () => {
   await navigator.clipboard.writeText(rawJson.textContent);
@@ -211,3 +254,5 @@ window.addEventListener("resize", () => {
     syncOverlaySize();
   }
 });
+
+checkApiHealth();
